@@ -34,6 +34,17 @@ typedef struct {
     Vec2 step;
     
     bool eats;
+    bool valid;
 } Turn;
+
+typedef struct {
+    Side turning_side;
+    Piece field[FIELD_SIZE][FIELD_SIZE];
+} GameContext;
+
+bool can_move(GameContext *context, Turn turn);
+Piece make_piece(PieceType type, Side side);
+Side opposite_side(Side side);
+bool is_piece(GameContext *context, Vec2 pos, Side side);
 
 #endif //CHESS_GAME_H
