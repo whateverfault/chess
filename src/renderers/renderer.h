@@ -10,4 +10,6 @@ void init();
 void update(GameContext *context);
 void end();
 
+void update_and_wait_for_input(GameContext *context);
+
 #endif //CHESS_RENDERER_H

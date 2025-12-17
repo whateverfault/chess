@@ -18,6 +18,7 @@ typedef enum {
 } PieceType;
 
 typedef enum {
+    SIDE_NONE,
     SIDE_ANY,
     SIDE_BLACK,
     SIDE_WHITE,
@@ -40,11 +41,15 @@ typedef struct {
 typedef struct {
     Side turning_side;
     Piece field[FIELD_SIZE][FIELD_SIZE];
+
+    Side check_side;
+    Side mate_side;
 } GameContext;
 
-bool can_move(GameContext *context, Turn turn);
 Piece make_piece(PieceType type, Side side);
+Turn make_turn(const GameContext *context, Vec2 from, Vec2 to);
+bool can_move(const GameContext *context, Turn turn);
+bool is_piece(const GameContext *context, Vec2 pos, Side side);
 Side opposite_side(Side side);
-bool is_piece(GameContext *context, Vec2 pos, Side side);
 
 #endif //CHESS_GAME_H

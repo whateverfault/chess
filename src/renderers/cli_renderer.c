@@ -56,35 +56,29 @@ bool is_valid_turn_input(char turn_buffer[TURN_BUFFER_LENGTH]){
 }
 
 Turn get_turn(GameContext *context){
-    Turn turn = {0};
-
     char turn_buffer[TURN_BUFFER_LENGTH] = {0};
 
     printf("\nTurn: ");
 
     fgets(turn_buffer, TURN_BUFFER_LENGTH, stdin);
 
-    turn.valid = is_valid_turn_input(turn_buffer);
+    bool valid = is_valid_turn_input(turn_buffer);
 
-    turn.from = (Vec2){
-            .x = ascii_alpha_to_num(turn_buffer[0]),
-            .y = FIELD_SIZE - ascii_num_to_num(turn_buffer[1]),
-    };
-
-    turn.to = (Vec2){
-            .x = ascii_alpha_to_num(turn_buffer[2]),
-            .y = FIELD_SIZE - ascii_num_to_num(turn_buffer[3]),
-    };
-
-    if (!turn.valid){
+    Turn turn = make_turn(context,
+                          (Vec2){
+                                  .x = ascii_alpha_to_num(turn_buffer[0]),
+                                  .y = FIELD_SIZE - ascii_num_to_num(turn_buffer[1]),
+                          },
+                          (Vec2){
+                                  .x = ascii_alpha_to_num(turn_buffer[2]),
+                                  .y = FIELD_SIZE - ascii_num_to_num(turn_buffer[3]),
+                          });
+    turn.valid = valid;
+    
+    if (!valid){
         return turn;
     }
-
-    turn.step = vec2_subtract(turn.to, turn.from);
-
-    turn.eats = is_piece(context, turn.to,
-                         opposite_side(context->field[turn.from.y][turn.from.x].side));
-
+    
     return turn;
 }
 
@@ -161,6 +155,8 @@ static String_Builder white_sb = {0};
 static String_Builder black_sb = {0};
 
 void init(){
+    end();
+    
     setlocale(LC_ALL, "en_US.UTF-8");
 
 #ifdef _WIN32
@@ -171,17 +167,17 @@ void init(){
     sb_appendf(&black_sb, "BLACK");
 }
 
-void update(GameContext *context){
+void print_field(GameContext *context){
     String_View line = {0};
 
     buffer.count = 0;
     size_t line_number = 0;
-    
+
     sb_appendf(&buffer, "  ┌────┬────┬────┬────┬────┬────┬────┬────┐\n");
-    
+
     for (int rank = 0; rank < FIELD_SIZE; ++rank) {
         sb_appendf(&buffer, "%d │ ", FIELD_SIZE - rank);
-        
+
         for (int file = 0; file < FIELD_SIZE; file++) {
             sb_appendf(&buffer, get_piece_symbol(context->field[rank][file]));
 
@@ -191,13 +187,13 @@ void update(GameContext *context){
         }
 
         sb_appendf(&buffer, "  │\n");
-        
+
         if (rank < FIELD_SIZE - 1){
             sb_appendf(&buffer, "  ├────┼────┼────┼────┼────┼────┼────┼────┤");
         }else{
             sb_appendf(&buffer, "  └────┴────┴────┴────┴────┴────┴────┴────┘");
         }
-        
+
 
         sb_get_line(&buffer, &line, line_number++);
 
@@ -210,10 +206,31 @@ void update(GameContext *context){
     }
 
     sb_get_line(&buffer, &line, 0);
-    
+
     printf("%s\n", buffer.items);
+}
+
+void update(GameContext *context){
+    print_field(context);
+
+    if (context->mate_side != SIDE_NONE){
+        printf("\nMATE!\n");
+        return;
+    }
+    
+    if (context->check_side != SIDE_NONE){
+        printf("\nCHECK!\n");
+    }
 }
 
 void end(){
     printf("\x1b[2J\x1b[3J\x1b[H");
+}
+
+void update_and_wait_for_input(GameContext *context){
+    end();
+
+    update(context);
+
+    getch();
 }
